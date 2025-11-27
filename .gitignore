@@ -1,0 +1,12 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Sensitive files
+.env
+api_keys.py
+
+# Other common files to ignore
+*.log
+__pycache__/
