@@ -1,0 +1,48 @@
+name: Release Pipeline
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      #  Checkout the code at the release tag
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      #  Set up Python on self-hosted runner
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Ensure deployment folder exists and copy code
+      - name: Deploy Application
+        run: |
+          mkdir -p ~/myapp             # create folder if missing
+          rm -rf ~/myapp/*             # clear old files
+          cp -r $GITHUB_WORKSPACE/* ~/myapp/
+
+      #  Create virtualenv if missing and install dependencies
+      - name: Install Python Dependencies
+        run: |
+          python3 -m venv ~/.venvs/myapp-venv || true
+          source ~/.venvs/myapp-venv/bin/activate
+          pip install --upgrade pip
+          if [ -f ~/myapp/requirements.txt ]; then pip install -r ~/myapp/requirements.txt; fi
+
+      #  Start or restart app in tmux
+      - name: Restart App
+        run: |
+          cd ~/myapp
+          tmux kill-session -t myapp 2>/dev/null || true
+          tmux new-session -d -s myapp "./start_app.sh"
+
+      #  Confirmation
+      - name: Deployment Done
+        run: echo "Python app deployed successfully on Ubuntu WSL!"
