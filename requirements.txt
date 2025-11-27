@@ -1,0 +1,9 @@
+# 1. Update/set PyTorch to a recent stable version
+torch==2.3.0
+# 2. Set the three core Hugging Face libraries to compatible versions
+diffusers==0.24.0
+transformers==4.35.2
+accelerate==0.25.0
+huggingface-hub==0.20.3
+peft==0.5.0
+opencv-python-headless
