@@ -28,28 +28,24 @@ jobs:
           rm -rf ~/myapp/*             # clear old files
           cp -r $GITHUB_WORKSPACE/* ~/myapp/
 
-      # Create virtualenv if missing and install dependencies, start app
       - name: Install Dependencies & Start App
         run: |
-          # Navigate to deployment folder
-          cd ~/myapp
-          
-          # Create virtualenv in deployment folder
+         cd ~/myapp
+    
+          # Create virtualenv
           python3 -m venv venv
           source venv/bin/activate
-          
-          # Upgrade pip and install requirements if available
+    
+          # Upgrade pip and install requirements
           pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          
-          # Ensure start script is executable
-          chmod +x ./start_app.sh
-          
-          # Stop previous app process if running
-          pkill -f "python3 ~/myapp/main.py" || true
-          
-          # Start app in background using nohup and log output
-          nohup ~/myapp/venv/bin/python ~/myapp/main.py > ~/myapp/app.log 2>&1 &
+    
+          # Stop previous app if running
+          pkill -f "python3 ~/myapp/image_generator.py" || true
+    
+          # Start the app in background
+          nohup ~/myapp/venv/bin/python ~/myapp/image_generator.py > ~/myapp/app.log 2>&1 &
+
 
       # Confirmation
       - name: Deployment Done
