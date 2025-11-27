@@ -1,0 +1,53 @@
+import json
+
+# Your full sample gait insights data mimicking the API response
+gait_data = {
+  "status": "success",
+  "message": "AI Analytics retrieved successfully",
+  "data": {
+    "summary": {
+      "title": "Oxygen and Rhythm Review",
+      "message": "Great job maintaining your heart rate variability, cadence stability, and oxygen saturation levels!"
+    },
+    "insights": [
+      {
+        "level": "CADENCE_STABILITY",
+        "title": "Steady Pace",
+        "message": "Your consistent stride indicates a well-practiced rhythm."
+      },
+      {
+        "level": "HRV",
+        "title": "Heart Resilience",
+        "message": "Your high heart rate variability suggests a strong heart and adaptable nervous system."
+      },
+      {
+        "level": "Spo2",
+        "title": "Oxygen Levels",
+        "message": "Your oxygen saturation level remains within normal range, ensuring your body receives sufficient oxygen."
+      }
+    ],
+    "suggestions": [
+      {
+        "level": "CADENCE_STABILITY",
+        "title": "Maintain Consistency",
+        "message": "Keep up the great work on maintaining a steady pace!"
+      },
+      {
+        "level": "HRV",
+        "title": "Continue Deep Breathing",
+        "message": "Deep breathing exercises can further enhance your heart rate variability."
+      },
+      {
+        "level": "Spo2",
+        "title": "Stay Active",
+        "message": "Regular physical activity helps maintain healthy oxygen saturation levels."
+      }
+    ]
+  }
+}
+
+# Save the full data structure to the JSON file
+with open("sample_gait.json", "w") as f:
+    json.dump(gait_data, f, indent=4)
+
+print("✅ sample_gait.json file created successfully with the full API structure!")
