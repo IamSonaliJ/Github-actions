@@ -1,0 +1,13 @@
+[Unit]
+Description=Python App Service
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/myapp
+ExecStart=/home/ubuntu/myapp/venv/bin/python /home/ubuntu/myapp/image_generator.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
