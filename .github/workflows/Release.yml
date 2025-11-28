@@ -24,34 +24,32 @@ jobs:
       # Ensure deployment folder exists and copy code
       - name: Deploy Application
         run: |
-          mkdir -p ~/myapp             # create folder if missing
-          rm -rf ~/myapp/*             # clear old files
+          mkdir -p ~/myapp
+          rm -rf ~/myapp/*
           cp -r $GITHUB_WORKSPACE/* ~/myapp/
 
-      - name: Install Dependencies & Start App
+      # Install Dependencies + Install systemd file + Restart app
+      - name: Install Dependencies & Start App via systemd
         run: |
-         cd ~/myapp
-    
-          # Create virtualenv
+          cd ~/myapp
+
           python3 -m venv venv
           source venv/bin/activate
-    
-          # Upgrade pip and install requirements
+
           pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    
-          # Stop previous app if running
-          pkill -f "python3 ~/myapp/image_generator.py" || true
-    
-          # Start the app in background
-          nohup ~/myapp/venv/bin/python ~/myapp/image_generator.py > ~/myapp/app.log 2>&1 &
 
+          # Copy systemd service file
+          sudo cp pythonapp.service /etc/systemd/system/pythonapp.service
 
-      # Confirmation
+          # Apply systemd changes
+          sudo systemctl daemon-reload
+          sudo systemctl enable pythonapp
+          sudo systemctl restart pythonapp
+
       - name: Deployment Done
         run: |
-          echo "Python app deployed successfully on Ubuntu WSL!"
+          sudo systemctl status pythonapp --no-pager || true
           echo "Last 20 lines of log:"
-          tail -n 20 ~/myapp/app.log || echo "No logs yet"
-
+          journalctl -u pythonapp -n 20 --no-pager || echo "No logs yet"
 
