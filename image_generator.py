@@ -194,3 +194,38 @@ def generate_image_and_save(pipe, prompt: str, ref_img_dir: str, output_dir: str
         print(f"Warning: Failed to perform aggressive memory cleanup. Error: {e}")
 
     return out_path_optimized
+    
+
+ # ... [Your entire existing code remains unchanged above this line] ...
+
+# ==========================================================
+# === ADDITIONAL: Minimal Flask server to run app on port 8000 ===
+# ==========================================================
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Global pipe variable (reuse your pipeline if needed)
+pipe, device = load_pipeline_and_models(device="cuda" if torch.cuda.is_available() else "cpu")
+
+@app.route("/generate", methods=["POST"])
+def generate_endpoint():
+    try:
+        data = request.json
+        prompt = data.get("prompt", "")
+        ref_dir = data.get("ref_img_dir", "./ref_images")
+        output_dir = data.get("output_dir", "./outputs")
+        title = data.get("title", "default_title")
+        
+        result_path = generate_image_and_save(pipe, prompt, ref_dir, output_dir, title)
+        if result_path:
+            return jsonify({"status": "success", "file": result_path})
+        else:
+            return jsonify({"status": "failed", "message": "No image generated"}), 400
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+if __name__ == "__main__":
+    # Run Flask app on all interfaces so EC2 can access it
+    app.run(host="0.0.0.0", port=8000)
