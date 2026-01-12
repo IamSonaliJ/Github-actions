@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-# Make sure image_generator_functions.py is in the same directory
+# Make sure image_generator_functions.py is in the same direcctory
 try:
     from image_generator import load_pipeline_and_models, generate_image_and_save
 except ImportError:
