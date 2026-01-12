@@ -3,7 +3,7 @@
 # Stop on first error
 set -e
 
-# 1. Activate virtual environment (if you have one)
+# 1. Activate virtual environment (if you have 1)
 if [ -d "venv" ]; then
     echo "Activating virtual environment..."
     source venv/bin/activate
