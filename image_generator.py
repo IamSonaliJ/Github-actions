@@ -17,7 +17,7 @@ LAYER_DIFFUSION_LORA_NAME = "layer_xl_transparent_attn.safetensors"
 LAYER_DIFFUSION_VAE_NAME = "vae_transparent_decoder.safetensors"
 
 
-# --- Utility Functions ---
+# --- Utility Functions -----
 
 def match_reference_image(ref_img_dir, prompt_text=""):
     """Dynamically selects the best reference image based on activity in the prompt."""
