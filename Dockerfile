@@ -10,7 +10,7 @@ COPY requirements.txt .
 # Install dependency
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy code
+# Copy code..
 COPY . .
 
 # Expose FastAPI default port
