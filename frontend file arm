@@ -1,0 +1,110 @@
+name: Deploy via SSM (ECR → EC2)
+
+on:
+  push:
+    branches:
+      - florina-dev
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::259030234101:role/Oidc-own-tenant-Role
+          aws-region: ap-south-1
+
+
+      - name: Verify AWS (silent)
+        run: aws sts get-caller-identity >/dev/null
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+  
+
+      - name: Fetch Deploy Config
+        run: |
+            set -e
+
+            SECRET=$(aws secretsmanager get-secret-value \
+            --secret-id prod/florina/frontend/infra/config \
+            --query SecretString \
+            --output text)
+
+            echo "::add-mask::$SECRET"
+
+            API_URL=$(echo "$SECRET" | jq -r '.NEXT_PUBLIC_BASE_API_URL')
+            INSTANCE_ID=$(echo "$SECRET" | jq -r '.INSTANCE_ID')
+            ECR_REGISTRY=$(echo "$SECRET" | jq -r '.ECR_REGISTRY')
+            ECR_REPO=$(echo "$SECRET" | jq -r '.ECR_REPO')
+
+            echo "::add-mask::$API_URL"
+            echo "::add-mask::$INSTANCE_ID"
+            echo "::add-mask::$ECR_REGISTRY"
+            echo "::add-mask::$ECR_REPO"
+
+            echo "NEXT_PUBLIC_BASE_API_URL=$API_URL" >> $GITHUB_ENV
+            echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+            echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+            echo "ECR_REPO=$ECR_REPO" >> $GITHUB_ENV
+
+
+      - name: Login ECR
+        run: |
+          aws ecr get-login-password --region ap-south-1 \
+          | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Image
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --build-arg NEXT_PUBLIC_BASE_API_URL=$NEXT_PUBLIC_BASE_API_URL \
+            -t $ECR_REGISTRY/$ECR_REPO:latest \
+            . \
+            --push
+
+      - name: Deploy to EC2 via SSM
+        run: |
+            IMAGE="$ECR_REGISTRY/$ECR_REPO:latest"
+
+            aws ssm send-command \
+            --region ap-south-1 \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy frontend" \
+            --parameters '{
+                "commands": [
+                "set -ex",
+
+                "sudo systemctl enable docker",
+                "sudo systemctl start docker",
+
+                "aws --version",
+                "docker --version",
+
+                "aws ecr get-login-password --region ap-south-1 | sudo docker login --username AWS --password-stdin '"$ECR_REGISTRY"'",
+
+                "sudo docker stop frontend || true",
+                "sudo docker rm frontend || true",
+
+                "sudo docker pull '"$IMAGE"'",
+
+                "sudo docker run -d --name frontend --platform linux/arm64 -p 3000:3000 --restart always '"$IMAGE"'",
+
+                "sudo docker ps",
+                "sudo docker images",
+                "sudo docker image prune -af"
+                ]
+            }'
