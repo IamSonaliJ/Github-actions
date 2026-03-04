@@ -6,7 +6,7 @@ on:
 
 jobs:
   publish:
-    runs-on: React
+    runs-on: [self-hosted, Linux, ARM64, React]
 
     steps:
       - name: Checkout Code
